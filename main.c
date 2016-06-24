@@ -46,8 +46,28 @@ typedef struct User
     Friend* friends;
 } User;
 
+typedef struct List
+{
+    char word[100];
+    int n;
+
+    struct List* prev;
+    struct List* next;
+} List;
+
 Word *word_head, *word_tail;
 User *user_head, *user_tail;
+List *list_head, *list_tail;
+
+void List_init()
+{
+    list_head = (List*)malloc(sizeof(List));
+    list_tail = (List*)malloc(sizeof(List));
+    list_head->next=list_tail;
+    list_tail->prev=list_head;
+    list_head->prev=NULL;
+    list_tail->next=NULL;
+}
 
 void Word_init()
 {
@@ -57,6 +77,18 @@ void Word_init()
     word_tail->prev = word_head;
     word_head->prev = NULL;
     word_tail->next = NULL;
+}
+
+List* newList(char word[])
+{
+    List* list = (List*)malloc(sizeof(List));
+    strcpy(list->word, word);
+    list->n=0;
+    list->prev = list_head;
+    list->next=list_head->next;
+    list_head->next=list;
+
+    return list;
 }
 
 Word* newWord(char id_num[], char date[], char text[])
@@ -169,7 +201,7 @@ void RoadFile_friend(char file[])
 
     rewind(fp_friend);
 
-    total_friendship_record=count;
+    total_friendship_record=count/3;
     int i;
     for(i=0; i<count/3; i++)
     {
@@ -228,7 +260,7 @@ void RoadFile_word(char word[])
 
     while(fgets(box, sizeof(box), fp_word) != NULL) count++;
 
-    total_tweet=count;
+    total_tweet=count/4;
 
     rewind(fp_word);
 
@@ -278,7 +310,7 @@ int getMaxFriendNum()
         int num=0;
         Friend* f;
 
-        for(f=a->friends; f!=NULL; f=f->next)
+        for(f=a->friends; f->next!=NULL; f=f->next)
         {
             num ++;
         }
@@ -309,7 +341,7 @@ int MaxTweet()
     int max=0;
 
     User* a;
-    for(a=user_head->next; a->next!=NULL; a=a->next)
+    for(a=user_head->next; a!=NULL; a=a->next)
     {
         if(a->tweet_num>max)
             max=a->tweet_num;
@@ -352,13 +384,58 @@ int main()
         }
         else if(order==1)
         {
-            printf("Average number of friends: %f\n", (double)(total_friendship_record*2)/total_user_num);
+            printf("Average number of friends: %f\n", (double)(total_friendship_record*2.0)/total_user_num);
             printf("Minimum friends: %d\n", getMinFriendNum());
             printf("Maxmum number of friends: %d\n", getMaxFriendNum());
             printf("\n");
-            printf("Average tweets per user: %f\n", (double)(total_tweet/total_user_num));
+            printf("Average tweets per user: %f\n", (double)((double)total_tweet/(double)total_user_num));
             printf("Minium tweets per user: %d\n", MinTweet());
             printf("Maximu tweets per user: %d\n", MaxTweet());
+        }
+        else if(order==2)
+        {
+            List_init();
+            int i=0;
+
+            Word* a;
+            for(a=word_head->next; a->next!=NULL; a=a->next)
+            {
+                List* l;
+                for(l=list_head->next; l->next!=NULL; l=l->next)
+                {
+                    if(!strcmp(l->word, a->word))
+                    {
+                        l->n++;
+                        break;
+                    }
+                    else
+                    {
+                        List* new_l = newList(a->word);
+                        new_l->n++;
+                        i++;
+                    }
+                }
+            }
+
+            /*List* x;
+            int t, min=BIG;
+            List* minList = newList("NULL");
+            for(t=0; t<i; t++)
+            {
+                for(x=list_head->next; x->next!=NULL; x=x->next)
+                {
+                    if(x->n<min)
+                    {
+                        x->prev->next=x->next;
+                        x->next->prev=x->prev;
+                        x->next=list_tail->next;
+                        x->prev=list_tail->prev;
+                        list_tail->prev->next=x;
+                        list_tail=x;
+                    }
+                }
+            }*/
+
         }
     }
     return 0;
