@@ -179,13 +179,13 @@ void RoadFile_friend(char file[])
 
         User* a;
         User* b;
-        for(a=user_head; a!=NULL; a=a->next)
+        for(a=user_head->next; a->next!=NULL; a=a->next)
         {
             if(!strcmp(a->id_num, id_1))
                 break;
         }
 
-        for(b=user_head; b!=NULL; b=b->next)
+        for(b=user_head->next; b->next!=NULL; b=b->next)
         {
             if(!strcmp(b->id_num, id_2))
                 break;
@@ -256,7 +256,7 @@ int getMinFriendNum()
         int num=0;
         Friend* f;
 
-        for(f=a->friends; f!=NULL; f=f->next)
+        for(f=a->friends; f->next!=NULL; f=f->next)
         {
             num ++;
         }
@@ -304,6 +304,20 @@ int MinTweet()
     return min;
 }
 
+int MaxTweet()
+{
+    int max=0;
+
+    User* a;
+    for(a=user_head->next; a->next!=NULL; a=a->next)
+    {
+        if(a->tweet_num>max)
+            max=a->tweet_num;
+    }
+
+    return max;
+}
+
 int main()
 {
     int order;
@@ -344,11 +358,8 @@ int main()
             printf("\n");
             printf("Average tweets per user: %f\n", (double)(total_tweet/total_user_num));
             printf("Minium tweets per user: %d\n", MinTweet());
-
+            printf("Maximu tweets per user: %d\n", MaxTweet());
         }
     }
-
-    system("PAUSE");
-
     return 0;
 }
