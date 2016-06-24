@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define NELEM 1500
+#define BIG 10000
 
 int total_user_num=0;
 int total_friendship_record=0;
@@ -25,15 +26,28 @@ Friend* newFriend()
 
 typedef struct Word
 {
-    char id_num[12];
     char date[33];
     char word[30];
 
+    struct User* writer;
     struct Word* next;
     struct Word* prev;
 } Word;
 
+typedef struct User
+{
+    char id_num[12];
+    char date[33];
+    char name[15];
+    int tweet_num;
+
+    struct User* next;
+    struct User* prev;
+    Friend* friends;
+} User;
+
 Word *word_head, *word_tail;
+User *user_head, *user_tail;
 
 void Word_init()
 {
@@ -48,28 +62,25 @@ void Word_init()
 Word* newWord(char id_num[], char date[], char text[])
 {
     Word* word = (Word*)malloc(sizeof(Word));
-    strcpy(word->id_num, id_num);
     strcpy(word->date, date);
     strcpy(word->word, text);
     word->prev = word_head;
     word->next = word_head->next;
     word_head->next = word;
 
+    User* a;
+    for(a=user_head->next; a!=NULL; a=a->next)
+    {
+        if(!strcmp(a->id_num, id_num))
+        {
+            word->writer=a;
+            a->tweet_num++;
+            break;
+        }
+    }
+
     return word;
 }
-
-typedef struct User
-{
-    char id_num[12];
-    char date[33];
-    char name[15];
-
-    struct User* next;
-    struct User* prev;
-    Friend* friends;
-} User;
-
-User *user_head, *user_tail;
 
 User* newUser(char id_num[], char date[], char name[])
 {
@@ -82,6 +93,7 @@ User* newUser(char id_num[], char date[], char name[])
     user->next = user_head->next;
     user_head->next = user;
     user->friends = f;
+    user->tweet_num=0;
 
     return user;
 }
@@ -90,10 +102,14 @@ void User_init()
 {
     user_head = (User*)malloc(sizeof(User));
     user_tail = (User*)malloc(sizeof(User));
+
     user_head->next = user_tail;
     user_tail->prev = user_head;
     user_head->prev = NULL;
     user_tail->next = NULL;
+
+    user_head->friends = NULL;
+    user_tail->friends = NULL;
 }
 
 void RoadFile_user(char user[])
@@ -182,14 +198,10 @@ void RoadFile_friend(char file[])
         f1->user=b;
         f2->user=a;
 
-        /*printf("f1->user->id_num : %s", f1->user->id_num);
-        printf("f2->user->id_num : %s", f2->user->id_num);
-        printf("f1->next : %s\n", f1->next);
-        printf("a->friends->next : %s\n\n", a->friends->next);*/
-        f1->next=a->friends->next;
+        f1->next=a->friends;
         a->friends=f1;
 
-        f2->next=b->friends->next;
+        f2->next=b->friends;
         b->friends=f2;
     }
     fclose(fp_friend);
@@ -233,6 +245,65 @@ void RoadFile_word(char word[])
     fclose(fp_word);
 }
 
+int getMinFriendNum()
+{
+    int min=BIG;
+
+
+    User* a;
+    for(a=user_head->next; a->next!=NULL; a=a->next)
+    {
+        int num=0;
+        Friend* f;
+
+        for(f=a->friends; f!=NULL; f=f->next)
+        {
+            num ++;
+        }
+
+        if(num<min)
+            min = num;
+    }
+
+    return min;
+}
+
+int getMaxFriendNum()
+{
+    int max=0;
+
+    User* a;
+    for(a=user_head->next; a->next!=NULL; a=a->next)
+    {
+        int num=0;
+        Friend* f;
+
+        for(f=a->friends; f!=NULL; f=f->next)
+        {
+            num ++;
+        }
+
+        if(num>max)
+            max = num;
+    }
+
+    return max;
+}
+
+int MinTweet()
+{
+    int min=BIG;
+
+    User* a;
+    for(a=user_head->next; a->next!=NULL; a=a->next)
+    {
+        if(a->tweet_num<min)
+            min=a->tweet_num;
+    }
+
+    return min;
+}
+
 int main()
 {
     int order;
@@ -254,8 +325,9 @@ int main()
         printf("7. Delete all users who mentioned a word\n");
         printf("8. Find strongly connected components\n");
         printf("9. Find shortest path from a given user\n");
+        printf("99. Quit\n");
         printf("---------------------------------------------------------\n");
-        printf("order : ");
+        printf("Select Menu : ");
 
         scanf("%d", &order);
         if(order==0)
@@ -266,6 +338,12 @@ int main()
         }
         else if(order==1)
         {
+            printf("Average number of friends: %f\n", (double)(total_friendship_record*2)/total_user_num);
+            printf("Minimum friends: %d\n", getMinFriendNum());
+            printf("Maxmum number of friends: %d\n", getMaxFriendNum());
+            printf("\n");
+            printf("Average tweets per user: %f\n", (double)(total_tweet/total_user_num));
+            printf("Minium tweets per user: %d\n", MinTweet());
 
         }
     }
