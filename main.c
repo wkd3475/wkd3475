@@ -10,9 +10,18 @@ int total_tweet=0;
 
 typedef struct Friend
 {
-    char id_num[12];
+    struct User* user;
     struct Friend* next;
 } Friend;
+
+Friend* newFriend()
+{
+    Friend* f=(Friend*)malloc(sizeof(Friend));
+    f->next=NULL;
+    f->user=NULL;
+
+    return f;
+}
 
 typedef struct Word
 {
@@ -65,13 +74,14 @@ User *user_head, *user_tail;
 User* newUser(char id_num[], char date[], char name[])
 {
     User* user = (User*)malloc(sizeof(User));
+    Friend* f = newFriend();
     strcpy(user->id_num, id_num);
     strcpy(user->date, date);
     strcpy(user->name, name);
     user->prev = user_head;
     user->next = user_head->next;
     user_head->next = user;
-    user->friends = NULL;
+    user->friends = f;
 
     return user;
 }
@@ -141,15 +151,15 @@ void RoadFile_friend(char file[])
 
     while(fgets(box, sizeof(box), fp_friend) != NULL) count++;
 
-    total_friendship_record=count;
+    rewind(fp_friend);
 
+    total_friendship_record=count;
     int i;
     for(i=0; i<count/3; i++)
     {
         strcpy(id_1, fgets(id_1, sizeof(id_1), fp_friend));
         strcpy(id_2, fgets(id_2, sizeof(id_2), fp_friend));
         strcpy(buf, fgets(buf, sizeof(buf), fp_friend));
-
 
         User* a;
         User* b;
@@ -165,19 +175,23 @@ void RoadFile_friend(char file[])
                 break;
         }
 
-        Friend* f1;
-        Friend* f2;
 
-        strcpy(f1->id_num, b->id_num);
-        strcpy(f2->id_num, a->id_num);
+        Friend* f1=newFriend();
+        Friend* f2=newFriend();
 
+        f1->user=b;
+        f2->user=a;
+
+        /*printf("f1->user->id_num : %s", f1->user->id_num);
+        printf("f2->user->id_num : %s", f2->user->id_num);
+        printf("f1->next : %s\n", f1->next);
+        printf("a->friends->next : %s\n\n", a->friends->next);*/
         f1->next=a->friends->next;
         a->friends=f1;
 
         f2->next=b->friends->next;
         b->friends=f2;
     }
-
     fclose(fp_friend);
 }
 
@@ -224,7 +238,7 @@ int main()
     int order;
 
     RoadFile_user("user.txt");
-    //RoadFile_friend("friend.txt");
+    RoadFile_friend("friend.txt");
     RoadFile_word("word.txt");
 
     while(1)
